@@ -83,3 +83,7 @@ moon run src/examples/check_status --target native
 moon run src/examples/enable --target native
 moon run src/examples/disable --target native
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).

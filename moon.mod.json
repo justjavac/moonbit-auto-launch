@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "readme": "README.md",
   "repository": "https://github.com/justjavac/moonbit-auto-launch",
+  "license": "MIT",
   "keywords": [
     "desktop",
     "autostart",
