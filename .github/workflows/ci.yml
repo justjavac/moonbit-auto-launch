@@ -69,10 +69,11 @@ jobs:
           moon info --target native
           git diff --exit-code
 
-      - name: Coverage XML
+      - name: Coverage XML (main package only)
         shell: bash
         run: |
           moon test --target native --enable-coverage
+          # Report coverage for the library package only; exclude src/examples/*
           moon coverage analyze -p justjavac/auto_launch -- -f cobertura -o coverage.xml
 
       - name: Upload coverage to Codecov
