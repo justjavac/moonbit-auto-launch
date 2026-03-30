@@ -67,6 +67,8 @@ fn main {
 moon fmt
 moon check --target native
 moon test --target native
+
+# Coverage for the main package only; excludes src/examples/*
 moon test --target native --enable-coverage
 moon coverage analyze -p justjavac/auto_launch -- -f summary
 moon info --target native
