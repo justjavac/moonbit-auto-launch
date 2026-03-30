@@ -12,8 +12,7 @@ pub enum Platform {
 } derive(Eq, Show)
 
 ///|
-/// Internal backend categories used to map runtime platforms onto concrete
-/// startup mechanisms.
+/// Internal backend categories for supported startup mechanisms.
 enum BackendKind {
   WindowsRegistry
   MacLaunchAgent
@@ -23,9 +22,6 @@ enum BackendKind {
 
 ///|
 /// Decodes the numeric platform code returned by the native layer.
-///
-/// Unknown codes are intentionally mapped to `Unsupported` so higher layers can
-/// fail predictably instead of making assumptions about future values.
 fn platform_from_code(code : Int) -> Platform {
   match code {
     1 => Platform::Windows
@@ -37,9 +33,6 @@ fn platform_from_code(code : Int) -> Platform {
 
 ///|
 /// Returns the auto-launch backend used for `platform`.
-///
-/// Keeping this mapping explicit makes it easier to add future backends without
-/// scattering platform switches throughout the package.
 fn backend_for_platform(platform : Platform) -> BackendKind {
   match platform {
     Platform::Windows => BackendKind::WindowsRegistry

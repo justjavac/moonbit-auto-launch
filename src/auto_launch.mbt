@@ -1,8 +1,5 @@
 ///|
-/// Normalize constructor inputs into an internal `AutoLaunch` value.
-///
-/// This helper exists so tests can inject a fake executable-path provider while
-/// the public [`new`] function keeps a small, ergonomic signature.
+/// Normalizes constructor inputs and supports dependency injection in tests.
 fn new_with(
   platform : Platform,
   name : String,
