@@ -1,0 +1,21 @@
+{
+  "name": "justjavac/auto_launch",
+  "version": "0.1.0",
+  "readme": "README.md",
+  "repository": "https://github.com/justjavac/moonbit-auto-launch",
+  "keywords": [
+    "desktop",
+    "autostart",
+    "startup",
+    "auto-launch",
+    "native",
+    "windows",
+    "macos",
+    "linux"
+  ],
+  "description": "Cross-platform auto-launch helpers for MoonBit, inspired by Teamwork/node-auto-launch.",
+  "source": "src",
+  "warn-list": "",
+  "preferred-target": "native",
+  "supported-targets": "+native"
+}
