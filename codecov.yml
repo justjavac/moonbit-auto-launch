@@ -1,0 +1,18 @@
+codecov:
+  notify:
+    after_n_builds: 3
+
+comment:
+  after_n_builds: 3
+  layout: "diff, flags, files"
+
+flags:
+  linux:
+    paths:
+      - src/
+  macos:
+    paths:
+      - src/
+  windows:
+    paths:
+      - src/

@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/justjavac/moonbit-auto-launch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/justjavac/moonbit-auto-launch/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/justjavac/moonbit-auto-launch/graph/badge.svg?branch=main)](https://codecov.io/gh/justjavac/moonbit-auto-launch)
+[![codecov-linux](https://codecov.io/gh/justjavac/moonbit-auto-launch/graph/badge.svg?branch=main&flag=linux)](https://codecov.io/gh/justjavac/moonbit-auto-launch)
+[![codecov-macos](https://codecov.io/gh/justjavac/moonbit-auto-launch/graph/badge.svg?branch=main&flag=macos)](https://codecov.io/gh/justjavac/moonbit-auto-launch)
+[![codecov-windows](https://codecov.io/gh/justjavac/moonbit-auto-launch/graph/badge.svg?branch=main&flag=windows)](https://codecov.io/gh/justjavac/moonbit-auto-launch)
 
 Cross-platform auto-launch helpers for MoonBit.
 
