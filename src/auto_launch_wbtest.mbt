@@ -110,6 +110,16 @@ test "join paths and render linux desktop entries" {
       "Exec=\"/usr/bin/moonbit\" \"--hidden\" \"--profile\" \"work\"",
     ),
   )
+
+  let simple_contents = linux_desktop_contents({
+    name: "Simple App",
+    app_path: "/usr/bin/simple",
+    identifier: "simple-app",
+    launch_in_background: false,
+    background_arg: "--hidden",
+    extra_arguments: [],
+  })
+  assert_true(simple_contents.contains("Exec=\"/usr/bin/simple\""))
 }
 
 ///|
@@ -343,6 +353,21 @@ test "enable disable and is_enabled cover platform dispatch" {
   assert_eq(enabled_linux, Ok(true))
   assert_eq(
     observed_path, "/home/moonbit/.config/autostart/moonbit-app.desktop",
+  )
+
+  let enabled_macos = is_enabled_with(
+    launcher,
+    Platform::Macos,
+    fn() { Ok("/Users/moonbit") },
+    fn(_name) { Ok(false) },
+    fn(path) {
+      observed_path = path
+      Ok(true)
+    },
+  )
+  assert_eq(enabled_macos, Ok(true))
+  assert_eq(
+    observed_path, "/Users/moonbit/Library/LaunchAgents/moonbit-app.plist",
   )
 
   match
