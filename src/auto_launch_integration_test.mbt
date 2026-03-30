@@ -1,22 +1,6 @@
 ///|
-
-///|
-#borrow(name)
-extern "C" fn test_getenv_ffi(name : Bytes) -> Bytes = "mb_auto_launch_test_getenv"
-
-///|
-fn test_getenv(name : String) -> String? {
-  let value = @utf8.decode_lossy(test_getenv_ffi(@utf8.encode(name))[:])
-  if value.is_empty() {
-    None
-  } else {
-    Some(value)
-  }
-}
-
-///|
 fn integration_tests_enabled() -> Bool {
-  match test_getenv("MOONBIT_AUTO_LAUNCH_RUN_INTEGRATION_TESTS") {
+  match @env.get_env_var("MOONBIT_AUTO_LAUNCH_RUN_INTEGRATION_TESTS") {
     Some("1") => true
     Some("true") => true
     Some("yes") => true
