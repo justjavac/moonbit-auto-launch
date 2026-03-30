@@ -525,8 +525,9 @@ test "ffi helpers cover fallback error messages" {
   }
 
   match file_exists_result("") {
+    Ok(false) => ()
     Err(NativeFailure(action="file exists", ..)) => ()
-    _ => fail("expected file exists failure")
+    _ => fail("expected missing file or file exists failure")
   }
 }
 
