@@ -1,5 +1,8 @@
 # justjavac/auto_launch
 
+[![CI](https://github.com/justjavac/moonbit-auto-launch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/justjavac/moonbit-auto-launch/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/justjavac/moonbit-auto-launch/graph/badge.svg?branch=main)](https://codecov.io/gh/justjavac/moonbit-auto-launch)
+
 Cross-platform auto-launch helpers for MoonBit.
 
 This project is inspired by and references [Teamwork/node-auto-launch](https://github.com/Teamwork/node-auto-launch). The API shape, platform choices, and overall package direction in this repository were designed with that project as the main reference and source of inspiration.
