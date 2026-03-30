@@ -1,4 +1,8 @@
 ///|
+/// Returns the per-user LaunchAgent plist path for `identifier`.
+///
+/// The package intentionally targets `~/Library/LaunchAgents` so it behaves as
+/// a user-scoped auto-launch entry and does not require elevated privileges.
 fn launch_agent_path(home_directory : String, identifier : String) -> String {
   join_unix_path(
     join_unix_path(home_directory, "Library"),
@@ -7,6 +11,10 @@ fn launch_agent_path(home_directory : String, identifier : String) -> String {
 }
 
 ///|
+/// Returns the XDG autostart desktop-entry path for `identifier`.
+///
+/// This matches the common freedesktop.org convention used by desktop
+/// environments such as GNOME, KDE, XFCE, and others.
 fn linux_desktop_path(home_directory : String, identifier : String) -> String {
   join_unix_path(
     join_unix_path(join_unix_path(home_directory, ".config"), "autostart"),
@@ -15,6 +23,10 @@ fn linux_desktop_path(home_directory : String, identifier : String) -> String {
 }
 
 ///|
+/// Renders the command string stored in the Windows `Run` registry value.
+///
+/// Windows expects a single command-line string rather than a structured array,
+/// so each argument is individually escaped and then joined with spaces.
 fn windows_command(config : AutoLaunchConfig) -> String {
   let quoted : Array[String] = []
   for argument in build_program_arguments(config) {
@@ -24,6 +36,10 @@ fn windows_command(config : AutoLaunchConfig) -> String {
 }
 
 ///|
+/// Renders a freedesktop.org desktop-entry file for Linux auto-start.
+///
+/// The generated file is intentionally minimal and only includes the fields
+/// required for a regular background-less application launch on login.
 fn linux_desktop_contents(config : AutoLaunchConfig) -> String {
   let quoted : Array[String] = []
   for argument in build_program_arguments(config) {
@@ -44,6 +60,10 @@ fn linux_desktop_contents(config : AutoLaunchConfig) -> String {
 }
 
 ///|
+/// Renders the `<string>` entries for a LaunchAgent `ProgramArguments` array.
+///
+/// Each argument is XML-escaped independently so special characters in paths or
+/// flags never break the plist structure.
 fn plist_program_arguments(arguments : Array[String]) -> String {
   let builder = StringBuilder::new()
   for argument in arguments {
@@ -55,6 +75,10 @@ fn plist_program_arguments(arguments : Array[String]) -> String {
 }
 
 ///|
+/// Renders a macOS LaunchAgent plist.
+///
+/// The generated plist uses `RunAtLoad=true`, which mirrors the behavior users
+/// generally expect from an "auto-launch on login" feature.
 fn mac_launch_agent_contents(config : AutoLaunchConfig) -> String {
   let arguments = build_program_arguments(config)
   let argument_items = plist_program_arguments(arguments)
@@ -77,6 +101,10 @@ fn mac_launch_agent_contents(config : AutoLaunchConfig) -> String {
 }
 
 ///|
+/// Produces the file-backed entry for the requested platform.
+///
+/// Only macOS and Linux are handled here because Windows stores its entry in
+/// the registry instead of a file.
 fn file_entry_result(
   config : AutoLaunchConfig,
   platform : Platform,
@@ -98,6 +126,11 @@ fn file_entry_result(
 }
 
 ///|
+/// Resolves the concrete file entry for a launcher, including the caller's home
+/// directory lookup.
+///
+/// Separating this step keeps platform-specific path rendering pure and makes
+/// the enable/disable/status code easy to unit test with injected functions.
 fn resolve_file_entry(
   launcher : AutoLaunch,
   platform : Platform,
@@ -111,6 +144,12 @@ fn resolve_file_entry(
 }
 
 ///|
+/// Enables auto-launch using injected side-effect functions.
+///
+/// This is the behavior core behind [`AutoLaunch::enable`](../auto_launch.mbt):
+/// it selects the correct backend for the platform and delegates I/O to the
+/// provided callbacks so tests can exercise the branching logic without touching
+/// the real system.
 fn enable_with(
   launcher : AutoLaunch,
   platform : Platform,
@@ -134,6 +173,10 @@ fn enable_with(
 }
 
 ///|
+/// Disables auto-launch using injected side-effect functions.
+///
+/// File-backed platforms resolve the expected entry path first and then remove
+/// it. Windows delegates directly to the registry callback.
 fn disable_with(
   launcher : AutoLaunch,
   platform : Platform,
@@ -153,6 +196,11 @@ fn disable_with(
 }
 
 ///|
+/// Checks whether auto-launch is currently enabled using injected lookup
+/// functions.
+///
+/// The check is backend-specific: Windows asks for the registry value to exist,
+/// while macOS and Linux ask for the rendered file path to exist.
 fn is_enabled_with(
   launcher : AutoLaunch,
   platform : Platform,
