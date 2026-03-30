@@ -1,4 +1,8 @@
 ///|
+/// Normalize constructor inputs into an internal `AutoLaunch` value.
+///
+/// This helper exists so tests can inject a fake executable-path provider while
+/// the public [`new`] function keeps a small, ergonomic signature.
 fn new_with(
   platform : Platform,
   name : String,
@@ -65,6 +69,22 @@ fn new_with(
 ///
 /// `identifier` controls the stable registry value or file name used by the
 /// backend. When omitted, it is derived from `name`.
+///
+/// Returns `Err(AutoLaunchError)` when validation fails, when the current
+/// platform is unsupported, or when the executable path cannot be discovered.
+///
+/// The resulting value is reusable: you can keep it around and call
+/// `enable()`, `disable()`, and `is_enabled()` multiple times.
+///
+/// # Example
+/// ```mbt nocheck
+/// let launcher = @auto_launch.new(
+///   "MoonBit Demo",
+///   path="/usr/bin/moonbit",
+///   launch_in_background=true,
+///   extra_arguments=["--serve"],
+/// )
+/// ```
 pub fn new(
   name : String,
   path? : String,
@@ -87,12 +107,20 @@ pub fn new(
 
 ///|
 /// Returns the configured human-readable application name.
+///
+/// This is the display name used in generated desktop-entry style metadata. It
+/// may contain spaces and punctuation and is independent from the backend
+/// identifier used for file names or registry keys.
 pub fn AutoLaunch::name(self : AutoLaunch) -> String {
   self.config.name
 }
 
 ///|
 /// Returns the resolved absolute executable path that will be launched.
+///
+/// The value returned here is always the normalized absolute path that passed
+/// constructor validation, either from the explicit `path` argument or from the
+/// current executable path discovered by the native backend.
 pub fn AutoLaunch::path(self : AutoLaunch) -> String {
   self.config.app_path
 }
@@ -100,12 +128,26 @@ pub fn AutoLaunch::path(self : AutoLaunch) -> String {
 ///|
 /// Returns the stable backend identifier used for the registry value or file
 /// name.
+///
+/// This value is derived from `name` unless the caller provided `identifier`
+/// explicitly. It is sanitized for backend-safe usage and is what ties
+/// `enable()`, `disable()`, and `is_enabled()` to the same platform entry.
 pub fn AutoLaunch::identifier(self : AutoLaunch) -> String {
   self.config.identifier
 }
 
 ///|
 /// Enable auto-launch for this configuration on the current platform.
+///
+/// On supported platforms this creates or updates the corresponding startup
+/// entry:
+///
+/// - Windows: writes the current-user `Run` registry value
+/// - macOS: writes a LaunchAgent plist under `~/Library/LaunchAgents`
+/// - Linux: writes an XDG autostart desktop entry under
+///   `~/.config/autostart`
+///
+/// Returns `Ok(())` when the entry was written successfully.
 pub fn AutoLaunch::enable(self : AutoLaunch) -> Result[Unit, AutoLaunchError] {
   enable_with(
     self,
@@ -118,6 +160,9 @@ pub fn AutoLaunch::enable(self : AutoLaunch) -> Result[Unit, AutoLaunchError] {
 
 ///|
 /// Disable auto-launch for this configuration on the current platform.
+///
+/// Missing entries are treated as already-disabled and therefore do not produce
+/// an error in the native backend.
 pub fn AutoLaunch::disable(self : AutoLaunch) -> Result[Unit, AutoLaunchError] {
   disable_with(
     self,
@@ -130,6 +175,10 @@ pub fn AutoLaunch::disable(self : AutoLaunch) -> Result[Unit, AutoLaunchError] {
 
 ///|
 /// Check whether the auto-launch entry currently exists for this configuration.
+///
+/// This is an existence check against the backend entry identified by
+/// `identifier()`. It does not attempt to prove that the entry still contains
+/// the exact expected command line beyond the backend's own lookup semantics.
 pub fn AutoLaunch::is_enabled(
   self : AutoLaunch,
 ) -> Result[Bool, AutoLaunchError] {
