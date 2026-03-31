@@ -307,6 +307,18 @@ test "enable disable and is_enabled cover platform dispatch" {
   match
     enable_with(
       launcher,
+      Platform::Linux,
+      fn() { Err(HomeDirectoryUnavailable) },
+      fn(_name, _command) { Ok(()) },
+      fn(_path, _contents) { Ok(()) },
+    ) {
+    Err(HomeDirectoryUnavailable) => ()
+    _ => fail("expected home directory failure")
+  }
+
+  match
+    enable_with(
+      launcher,
       Platform::Unsupported,
       fn() { Ok("/ignored") },
       fn(_name, _command) { Ok(()) },
