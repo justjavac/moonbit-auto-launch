@@ -8,8 +8,6 @@
 
 Cross-platform auto-launch helpers for MoonBit.
 
-This project is inspired by and references [Teamwork/node-auto-launch](https://github.com/Teamwork/node-auto-launch). The API shape, platform choices, and overall package direction in this repository were designed with that project as the main reference and source of inspiration.
-
 ## Example
 
 ```mbt check
@@ -39,12 +37,4 @@ test "public api can be called" {
     Err(_) => ()
   }
 }
-```
-
-## Example Programs
-
-```mbt nocheck
-moon run src/examples/check_status --target native
-moon run src/examples/enable --target native
-moon run src/examples/disable --target native
 ```
