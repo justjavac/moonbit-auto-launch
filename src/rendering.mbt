@@ -18,22 +18,27 @@ fn linux_desktop_path(home_directory : String, identifier : String) -> String {
 
 ///|
 /// Renders the command string stored in the Windows `Run` registry value.
-fn windows_command(config : AutoLaunchConfig) -> String {
+fn render_command_line(
+  config : AutoLaunchConfig,
+  quote_argument : (String) -> String,
+) -> String {
   let quoted : Array[String] = []
   for argument in build_program_arguments(config) {
-    quoted.push(windows_quote_argument(argument))
+    quoted.push(quote_argument(argument))
   }
   quoted.join(" ")
 }
 
 ///|
+/// Renders the command string stored in the Windows `Run` registry value.
+fn windows_command(config : AutoLaunchConfig) -> String {
+  render_command_line(config, windows_quote_argument)
+}
+
+///|
 /// Renders a freedesktop.org desktop-entry file for Linux auto-start.
 fn linux_desktop_contents(config : AutoLaunchConfig) -> String {
-  let quoted : Array[String] = []
-  for argument in build_program_arguments(config) {
-    quoted.push(desktop_quote_argument(argument))
-  }
-  let exec_line = quoted.join(" ")
+  let exec_line = render_command_line(config, desktop_quote_argument)
   (
     $|[Desktop Entry]
     $|Type=Application
@@ -119,6 +124,48 @@ fn resolve_file_entry(
 }
 
 ///|
+/// Writes a resolved file-backed launcher entry.
+fn write_resolved_file_entry(
+  launcher : AutoLaunch,
+  platform : Platform,
+  get_home_directory : () -> Result[String, AutoLaunchError],
+  write_file : (String, String) -> Result[Unit, AutoLaunchError],
+) -> Result[Unit, AutoLaunchError] {
+  match resolve_file_entry(launcher, platform, get_home_directory) {
+    Ok(entry) => write_file(entry.file_path, entry.contents)
+    Err(error) => Err(error)
+  }
+}
+
+///|
+/// Removes a resolved file-backed launcher entry.
+fn remove_resolved_file_entry(
+  launcher : AutoLaunch,
+  platform : Platform,
+  get_home_directory : () -> Result[String, AutoLaunchError],
+  remove_file : (String) -> Result[Unit, AutoLaunchError],
+) -> Result[Unit, AutoLaunchError] {
+  match resolve_file_entry(launcher, platform, get_home_directory) {
+    Ok(entry) => remove_file(entry.file_path)
+    Err(error) => Err(error)
+  }
+}
+
+///|
+/// Checks whether a resolved file-backed launcher entry exists.
+fn resolved_file_entry_exists(
+  launcher : AutoLaunch,
+  platform : Platform,
+  get_home_directory : () -> Result[String, AutoLaunchError],
+  file_exists : (String) -> Result[Bool, AutoLaunchError],
+) -> Result[Bool, AutoLaunchError] {
+  match resolve_file_entry(launcher, platform, get_home_directory) {
+    Ok(entry) => file_exists(entry.file_path)
+    Err(error) => Err(error)
+  }
+}
+
+///|
 /// Enables auto-launch using injected side-effect functions.
 fn enable_with(
   launcher : AutoLaunch,
@@ -134,10 +181,9 @@ fn enable_with(
         windows_command(launcher.config),
       )
     Platform::Macos | Platform::Linux =>
-      match resolve_file_entry(launcher, platform, get_home_directory) {
-        Ok(entry) => write_file(entry.file_path, entry.contents)
-        Err(error) => Err(error)
-      }
+      write_resolved_file_entry(
+        launcher, platform, get_home_directory, write_file,
+      )
     Platform::Unsupported => Err(AutoLaunchError::UnsupportedPlatform(platform))
   }
 }
@@ -154,10 +200,9 @@ fn disable_with(
   match platform {
     Platform::Windows => delete_windows_entry(launcher.config.identifier)
     Platform::Macos | Platform::Linux =>
-      match resolve_file_entry(launcher, platform, get_home_directory) {
-        Ok(entry) => remove_file(entry.file_path)
-        Err(error) => Err(error)
-      }
+      remove_resolved_file_entry(
+        launcher, platform, get_home_directory, remove_file,
+      )
     Platform::Unsupported => Err(AutoLaunchError::UnsupportedPlatform(platform))
   }
 }
@@ -174,10 +219,9 @@ fn is_enabled_with(
   match platform {
     Platform::Windows => windows_entry_exists(launcher.config.identifier)
     Platform::Macos | Platform::Linux =>
-      match resolve_file_entry(launcher, platform, get_home_directory) {
-        Ok(entry) => file_exists(entry.file_path)
-        Err(error) => Err(error)
-      }
+      resolved_file_entry_exists(
+        launcher, platform, get_home_directory, file_exists,
+      )
     Platform::Unsupported => Err(AutoLaunchError::UnsupportedPlatform(platform))
   }
 }

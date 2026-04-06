@@ -1,5 +1,47 @@
 ///|
 /// Normalizes constructor inputs and supports dependency injection in tests.
+fn require_supported_platform(
+  platform : Platform,
+) -> Result[Unit, AutoLaunchError] {
+  if backend_for_platform(platform) == BackendKind::UnsupportedBackend {
+    Err(AutoLaunchError::UnsupportedPlatform(platform))
+  } else {
+    Ok(())
+  }
+}
+
+///|
+/// Trims caller input and rejects empty values with a typed validation error.
+fn require_non_empty_text(
+  text : String,
+  empty_error : AutoLaunchError,
+) -> Result[String, AutoLaunchError] {
+  let trimmed = trim_text(text)
+  if trimmed.is_empty() {
+    Err(empty_error)
+  } else {
+    Ok(trimmed)
+  }
+}
+
+///|
+/// Resolves the executable path from explicit input or the runtime probe.
+fn resolve_executable_path(
+  path : String?,
+  get_current_executable_path~ : () -> Result[String, AutoLaunchError],
+) -> Result[String, AutoLaunchError] {
+  match path {
+    Some(explicit_path) =>
+      require_non_empty_text(
+        explicit_path,
+        AutoLaunchError::EmptyExecutablePath,
+      )
+    None => get_current_executable_path()
+  }
+}
+
+///|
+/// Normalizes constructor inputs and supports dependency injection in tests.
 fn new_with(
   platform : Platform,
   name : String,
@@ -10,32 +52,26 @@ fn new_with(
   identifier : String?,
   get_current_executable_path~ : () -> Result[String, AutoLaunchError],
 ) -> Result[AutoLaunch, AutoLaunchError] {
-  if backend_for_platform(platform) == BackendKind::UnsupportedBackend {
-    return Err(AutoLaunchError::UnsupportedPlatform(platform))
+  match require_supported_platform(platform) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
   }
 
-  let trimmed_name = trim_text(name)
-  if trimmed_name.is_empty() {
-    return Err(AutoLaunchError::EmptyName)
+  let trimmed_name = match
+    require_non_empty_text(name, AutoLaunchError::EmptyName) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
 
-  if launch_in_background && trim_text(background_arg).is_empty() {
+  let trimmed_background_arg = trim_text(background_arg)
+  if launch_in_background && trimmed_background_arg.is_empty() {
     return Err(AutoLaunchError::EmptyBackgroundArgument)
   }
 
-  let resolved_path = match path {
-    Some(explicit_path) => {
-      let trimmed_path = trim_text(explicit_path)
-      if trimmed_path.is_empty() {
-        return Err(AutoLaunchError::EmptyExecutablePath)
-      }
-      trimmed_path
-    }
-    None =>
-      match get_current_executable_path() {
-        Ok(executable_path) => executable_path
-        Err(error) => return Err(error)
-      }
+  let resolved_path = match
+    resolve_executable_path(path, get_current_executable_path~) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
 
   if !is_absolute_path(platform, resolved_path) {
@@ -48,7 +84,7 @@ fn new_with(
       app_path: resolved_path,
       identifier: default_identifier(trimmed_name, identifier),
       launch_in_background,
-      background_arg,
+      background_arg: trimmed_background_arg,
       extra_arguments,
     },
   })

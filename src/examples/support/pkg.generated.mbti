@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "justjavac/auto_launch/examples/support"
+
+import {
+  "justjavac/auto_launch",
+}
+
+// Values
+pub fn example_app_path(@auto_launch.Platform) -> String
+
+pub fn new_example_launcher(launch_in_background? : Bool, extra_arguments? : Array[String]) -> Result[@auto_launch.AutoLaunch, @auto_launch.AutoLaunchError]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

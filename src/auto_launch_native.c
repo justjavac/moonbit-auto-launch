@@ -115,6 +115,30 @@ static wchar_t *mb_utf8_to_wide(const char *value) {
   return wide;
 }
 
+static wchar_t *mb_bytes_to_wide_string(
+  moonbit_bytes_t bytes,
+  const char *allocation_error,
+  const char *conversion_error
+) {
+  char *utf8_value = mb_bytes_to_c_string(bytes);
+  wchar_t *wide_value = NULL;
+
+  if (utf8_value == NULL) {
+    mb_set_error(ENOMEM, allocation_error);
+    return NULL;
+  }
+
+  wide_value = mb_utf8_to_wide(utf8_value);
+  free(utf8_value);
+
+  if (wide_value == NULL) {
+    mb_set_error(ERROR_INVALID_DATA, conversion_error);
+    return NULL;
+  }
+
+  return wide_value;
+}
+
 static moonbit_bytes_t mb_wide_to_bytes(const wchar_t *value) {
   if (value == NULL) {
     return moonbit_make_bytes(0, 0);
@@ -417,29 +441,25 @@ MOONBIT_FFI_EXPORT int32_t mb_auto_launch_file_exists(moonbit_bytes_t path) {
 
 MOONBIT_FFI_EXPORT int32_t mb_auto_launch_windows_set_run_entry(moonbit_bytes_t name, moonbit_bytes_t command) {
 #ifdef _WIN32
-  char *utf8_name = mb_bytes_to_c_string(name);
-  char *utf8_command = mb_bytes_to_c_string(command);
   wchar_t *wide_name = NULL;
   wchar_t *wide_command = NULL;
   HKEY key = NULL;
   LONG status = ERROR_SUCCESS;
 
-  if (utf8_name == NULL || utf8_command == NULL) {
-    free(utf8_name);
-    free(utf8_command);
-    mb_set_error(ENOMEM, "Failed to allocate registry entry buffers");
-    return MB_STATUS_ERROR;
-  }
-
-  wide_name = mb_utf8_to_wide(utf8_name);
-  wide_command = mb_utf8_to_wide(utf8_command);
-  free(utf8_name);
-  free(utf8_command);
+  wide_name = mb_bytes_to_wide_string(
+    name,
+    "Failed to allocate registry entry name",
+    "Failed to convert registry entry name to UTF-16"
+  );
+  wide_command = mb_bytes_to_wide_string(
+    command,
+    "Failed to allocate registry entry command",
+    "Failed to convert registry entry command to UTF-16"
+  );
 
   if (wide_name == NULL || wide_command == NULL) {
     free(wide_name);
     free(wide_command);
-    mb_set_error(ERROR_INVALID_DATA, "Failed to convert registry entry to UTF-16");
     return MB_STATUS_ERROR;
   }
 
@@ -480,21 +500,15 @@ MOONBIT_FFI_EXPORT int32_t mb_auto_launch_windows_set_run_entry(moonbit_bytes_t 
 
 MOONBIT_FFI_EXPORT int32_t mb_auto_launch_windows_delete_run_entry(moonbit_bytes_t name) {
 #ifdef _WIN32
-  char *utf8_name = mb_bytes_to_c_string(name);
-  wchar_t *wide_name = NULL;
+  wchar_t *wide_name = mb_bytes_to_wide_string(
+    name,
+    "Failed to allocate registry entry name",
+    "Failed to convert registry entry name to UTF-16"
+  );
   HKEY key = NULL;
   LONG status = ERROR_SUCCESS;
 
-  if (utf8_name == NULL) {
-    mb_set_error(ENOMEM, "Failed to allocate registry entry name");
-    return MB_STATUS_ERROR;
-  }
-
-  wide_name = mb_utf8_to_wide(utf8_name);
-  free(utf8_name);
-
   if (wide_name == NULL) {
-    mb_set_error(ERROR_INVALID_DATA, "Failed to convert registry entry name to UTF-16");
     return MB_STATUS_ERROR;
   }
 
@@ -528,23 +542,17 @@ MOONBIT_FFI_EXPORT int32_t mb_auto_launch_windows_delete_run_entry(moonbit_bytes
 
 MOONBIT_FFI_EXPORT int32_t mb_auto_launch_windows_run_entry_exists(moonbit_bytes_t name) {
 #ifdef _WIN32
-  char *utf8_name = mb_bytes_to_c_string(name);
-  wchar_t *wide_name = NULL;
+  wchar_t *wide_name = mb_bytes_to_wide_string(
+    name,
+    "Failed to allocate registry entry name",
+    "Failed to convert registry entry name to UTF-16"
+  );
   HKEY key = NULL;
   DWORD type = 0;
   DWORD size = 0;
   LONG status = ERROR_SUCCESS;
 
-  if (utf8_name == NULL) {
-    mb_set_error(ENOMEM, "Failed to allocate registry entry name");
-    return MB_STATUS_ERROR;
-  }
-
-  wide_name = mb_utf8_to_wide(utf8_name);
-  free(utf8_name);
-
   if (wide_name == NULL) {
-    mb_set_error(ERROR_INVALID_DATA, "Failed to convert registry entry name to UTF-16");
     return MB_STATUS_ERROR;
   }
 
