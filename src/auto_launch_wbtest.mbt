@@ -1,4 +1,61 @@
 ///|
+/// Builds a reusable configuration record for white-box rendering and dispatch tests.
+fn sample_config(
+  name? : String = "MoonBit App",
+  app_path? : String = "/usr/bin/moonbit",
+  identifier? : String = "moonbit-app",
+  launch_in_background? : Bool = false,
+  background_arg? : String = "--hidden",
+  extra_arguments? : Array[String] = [],
+) -> AutoLaunchConfig {
+  {
+    name,
+    app_path,
+    identifier,
+    launch_in_background,
+    background_arg,
+    extra_arguments,
+  }
+}
+
+///|
+/// Builds a reusable launcher value for white-box behavior tests.
+fn sample_launcher(
+  name? : String = "MoonBit App",
+  app_path? : String = "/usr/bin/moonbit",
+  identifier? : String = "moonbit-app",
+  launch_in_background? : Bool = false,
+  background_arg? : String = "--hidden",
+  extra_arguments? : Array[String] = [],
+) -> AutoLaunch {
+  AutoLaunch::{
+    config: sample_config(
+      name~,
+      app_path~,
+      identifier~,
+      launch_in_background~,
+      background_arg~,
+      extra_arguments~,
+    ),
+  }
+}
+
+///|
+/// Returns the expected file-backed startup entry path for `platform`.
+fn expected_entry_path(
+  platform : Platform,
+  home_directory : String,
+  identifier : String,
+) -> String {
+  match platform {
+    Platform::Macos => launch_agent_path(home_directory, identifier)
+    Platform::Linux => linux_desktop_path(home_directory, identifier)
+    _ => ""
+  }
+}
+
+///|
+/// Verifies platform codes map to the expected runtime backends.
 test "platform mapping and backend selection" {
   assert_eq(platform_from_code(0), Platform::Unsupported)
   assert_eq(platform_from_code(1), Platform::Windows)
@@ -20,6 +77,7 @@ test "platform mapping and backend selection" {
 }
 
 ///|
+/// Verifies identifier sanitization remains stable for typical caller input.
 test "identifier sanitization is stable" {
   assert_eq(sanitize_identifier("MoonBit Auto Launch"), "moonbit-auto-launch")
   assert_eq(sanitize_identifier("  Hello__World  "), "hello__world")
@@ -30,6 +88,7 @@ test "identifier sanitization is stable" {
 }
 
 ///|
+/// Verifies absolute-path detection covers the supported Windows and Unix forms.
 test "absolute path detection covers windows and unix styles" {
   assert_true(is_absolute_path(Platform::Windows, "C:\\Windows\\notepad.exe"))
   assert_true(is_absolute_path(Platform::Windows, "C:/Windows/notepad.exe"))
@@ -42,23 +101,22 @@ test "absolute path detection covers windows and unix styles" {
 }
 
 ///|
+/// Verifies background and extra arguments are assembled in the expected order.
 test "program arguments include background switch when requested" {
-  let visible = {
-    name: "Visible App",
-    app_path: "/usr/bin/app",
-    identifier: "visible-app",
-    launch_in_background: false,
-    background_arg: "--hidden",
-    extra_arguments: ["--flag"],
-  }
-  let hidden = {
-    name: "Hidden App",
-    app_path: "/usr/bin/app",
-    identifier: "hidden-app",
-    launch_in_background: true,
-    background_arg: "--background",
-    extra_arguments: ["--flag", "value"],
-  }
+  let visible = sample_config(
+    name="Visible App",
+    app_path="/usr/bin/app",
+    identifier="visible-app",
+    extra_arguments=["--flag"],
+  )
+  let hidden = sample_config(
+    name="Hidden App",
+    app_path="/usr/bin/app",
+    identifier="hidden-app",
+    launch_in_background=true,
+    background_arg="--background",
+    extra_arguments=["--flag", "value"],
+  )
 
   assert_eq(build_program_arguments(visible), ["/usr/bin/app", "--flag"])
   assert_eq(build_program_arguments(hidden), [
@@ -67,6 +125,7 @@ test "program arguments include background switch when requested" {
 }
 
 ///|
+/// Verifies Windows command-line quoting handles common escaping edge cases.
 test "windows quoting escapes spaces quotes and trailing backslashes" {
   assert_eq(
     windows_quote_argument("C:\\Program Files\\App\\app.exe"),
@@ -77,6 +136,7 @@ test "windows quoting escapes spaces quotes and trailing backslashes" {
 }
 
 ///|
+/// Verifies desktop-entry quoting and plist XML escaping stay deterministic.
 test "desktop quoting and xml escaping are deterministic" {
   assert_eq(
     desktop_quote_argument("/opt/My App/app \"$HOME\""),
@@ -89,15 +149,13 @@ test "desktop quoting and xml escaping are deterministic" {
 }
 
 ///|
+/// Verifies Linux desktop-entry paths and file contents render correctly.
 test "join paths and render linux desktop entries" {
-  let config = {
-    name: "MoonBit App",
-    app_path: "/usr/bin/moonbit",
-    identifier: "moonbit-app",
-    launch_in_background: true,
-    background_arg: "--hidden",
-    extra_arguments: ["--profile", "work"],
-  }
+  let config = sample_config(
+    app_path="/usr/bin/moonbit",
+    launch_in_background=true,
+    extra_arguments=["--profile", "work"],
+  )
   assert_eq(
     linux_desktop_path("/home/moonbit", "moonbit-app"),
     "/home/moonbit/.config/autostart/moonbit-app.desktop",
@@ -111,27 +169,23 @@ test "join paths and render linux desktop entries" {
     ),
   )
 
-  let simple_contents = linux_desktop_contents({
-    name: "Simple App",
-    app_path: "/usr/bin/simple",
-    identifier: "simple-app",
-    launch_in_background: false,
-    background_arg: "--hidden",
-    extra_arguments: [],
-  })
+  let simple_contents = linux_desktop_contents(
+    sample_config(
+      name="Simple App",
+      app_path="/usr/bin/simple",
+      identifier="simple-app",
+    ),
+  )
   assert_true(simple_contents.contains("Exec=\"/usr/bin/simple\""))
 }
 
 ///|
+/// Verifies macOS LaunchAgent paths and plist contents render correctly.
 test "render mac launch agents" {
-  let config = {
-    name: "MoonBit App",
-    app_path: "/Applications/MoonBit.app/Contents/MacOS/MoonBit",
-    identifier: "moonbit-app",
-    launch_in_background: false,
-    background_arg: "--hidden",
-    extra_arguments: ["--agent"],
-  }
+  let config = sample_config(
+    app_path="/Applications/MoonBit.app/Contents/MacOS/MoonBit",
+    extra_arguments=["--agent"],
+  )
   assert_eq(
     launch_agent_path("/Users/moonbit", "moonbit-app"),
     "/Users/moonbit/Library/LaunchAgents/moonbit-app.plist",
@@ -158,15 +212,13 @@ test "render mac launch agents" {
 }
 
 ///|
+/// Verifies supported and unsupported backends resolve the expected entry specs.
 test "entry specs cover supported and unsupported branches" {
-  let windows_config = {
-    name: "MoonBit App",
-    app_path: "C:\\Program Files\\MoonBit\\moonbit.exe",
-    identifier: "moonbit-app",
-    launch_in_background: true,
-    background_arg: "--hidden",
-    extra_arguments: ["--trace"],
-  }
+  let windows_config = sample_config(
+    app_path="C:\\Program Files\\MoonBit\\moonbit.exe",
+    launch_in_background=true,
+    extra_arguments=["--trace"],
+  )
 
   let command = windows_command(windows_config)
   assert_true(command.contains("\"C:\\Program Files\\MoonBit\\moonbit.exe\""))
@@ -180,17 +232,9 @@ test "entry specs cover supported and unsupported branches" {
 }
 
 ///|
+/// Verifies platform dispatch routes enable, disable, and lookup calls correctly.
 test "enable disable and is_enabled cover platform dispatch" {
-  let launcher = AutoLaunch::{
-    config: {
-      name: "MoonBit App",
-      app_path: "/usr/bin/moonbit",
-      identifier: "moonbit-app",
-      launch_in_background: false,
-      background_arg: "--hidden",
-      extra_arguments: [],
-    },
-  }
+  let launcher = sample_launcher()
 
   let mut observed_path = ""
   let mut observed_windows_name = ""
@@ -211,7 +255,8 @@ test "enable disable and is_enabled cover platform dispatch" {
   )
   assert_eq(enable_linux, Ok(()))
   assert_eq(
-    observed_path, "/home/moonbit/.config/autostart/moonbit-app.desktop",
+    observed_path,
+    expected_entry_path(Platform::Linux, "/home/moonbit", "moonbit-app"),
   )
   assert_eq(observed_windows_name, "")
 
@@ -230,7 +275,8 @@ test "enable disable and is_enabled cover platform dispatch" {
   )
   assert_eq(disable_linux, Ok(()))
   assert_eq(
-    observed_path, "/home/moonbit/.config/autostart/moonbit-app.desktop",
+    observed_path,
+    expected_entry_path(Platform::Linux, "/home/moonbit", "moonbit-app"),
   )
 
   let enabled_windows = is_enabled_with(
@@ -286,7 +332,8 @@ test "enable disable and is_enabled cover platform dispatch" {
   )
   assert_eq(disable_macos, Ok(()))
   assert_eq(
-    observed_path, "/Users/moonbit/Library/LaunchAgents/moonbit-app.plist",
+    observed_path,
+    expected_entry_path(Platform::Macos, "/Users/moonbit", "moonbit-app"),
   )
 
   let enable_macos = enable_with(
@@ -301,7 +348,8 @@ test "enable disable and is_enabled cover platform dispatch" {
   )
   assert_eq(enable_macos, Ok(()))
   assert_eq(
-    observed_path, "/Users/moonbit/Library/LaunchAgents/moonbit-app.plist",
+    observed_path,
+    expected_entry_path(Platform::Macos, "/Users/moonbit", "moonbit-app"),
   )
 
   match
@@ -364,7 +412,8 @@ test "enable disable and is_enabled cover platform dispatch" {
   )
   assert_eq(enabled_linux, Ok(true))
   assert_eq(
-    observed_path, "/home/moonbit/.config/autostart/moonbit-app.desktop",
+    observed_path,
+    expected_entry_path(Platform::Linux, "/home/moonbit", "moonbit-app"),
   )
 
   let enabled_macos = is_enabled_with(
@@ -379,7 +428,8 @@ test "enable disable and is_enabled cover platform dispatch" {
   )
   assert_eq(enabled_macos, Ok(true))
   assert_eq(
-    observed_path, "/Users/moonbit/Library/LaunchAgents/moonbit-app.plist",
+    observed_path,
+    expected_entry_path(Platform::Macos, "/Users/moonbit", "moonbit-app"),
   )
 
   match
@@ -408,6 +458,7 @@ test "enable disable and is_enabled cover platform dispatch" {
 }
 
 ///|
+/// Verifies constructor validation branches beyond the public black-box cases.
 test "new covers additional validation branches" {
   guard is_supported() else { return }
 
@@ -440,6 +491,7 @@ test "new covers additional validation branches" {
 }
 
 ///|
+/// Verifies injected constructor dependencies surface unsupported and probe failures.
 test "new_with covers unsupported and executable path failures" {
   match
     new_with(
@@ -466,6 +518,7 @@ test "new_with covers unsupported and executable path failures" {
 }
 
 ///|
+/// Returns a temporary file path suitable for native FFI file-system tests.
 fn temp_file_path() -> String {
   match current_platform() {
     Windows => "C:\\Users\\Public\\moonbit-auto-launch-ffi-test.txt"
@@ -476,6 +529,7 @@ fn temp_file_path() -> String {
 }
 
 ///|
+/// Returns a path whose removal should fail in native FFI error-handling tests.
 fn invalid_remove_path() -> String {
   match current_platform() {
     Windows => "C:\\Windows"
@@ -486,6 +540,7 @@ fn invalid_remove_path() -> String {
 }
 
 ///|
+/// Verifies the native FFI helpers succeed on normal discovery and file operations.
 test "ffi helpers cover success paths" {
   match current_executable_path_result() {
     Ok(path) => assert_true(!path.is_empty())
@@ -507,6 +562,7 @@ test "ffi helpers cover success paths" {
 }
 
 ///|
+/// Verifies the native FFI helpers surface fallback error messages when needed.
 test "ffi helpers cover fallback error messages" {
   assert_eq(decode_optional_text(@utf8.encode("")), None)
   assert_eq(decode_optional_text(@utf8.encode("MoonBit")), Some("MoonBit"))
@@ -544,6 +600,7 @@ test "ffi helpers cover fallback error messages" {
 }
 
 ///|
+/// Verifies pure helper functions map native status codes into typed results.
 test "pure ffi result helpers cover success and error mappings" {
   assert_eq(
     optional_path_result(Some("/bin/true"), ExecutablePathUnavailable),
@@ -569,17 +626,9 @@ test "pure ffi result helpers cover success and error mappings" {
 }
 
 ///|
+/// Verifies file-entry resolution forwards home-directory failures unchanged.
 test "resolve_file_entry forwards home lookup failures" {
-  let launcher = AutoLaunch::{
-    config: {
-      name: "MoonBit App",
-      app_path: "/usr/bin/moonbit",
-      identifier: "moonbit-app",
-      launch_in_background: false,
-      background_arg: "--hidden",
-      extra_arguments: [],
-    },
-  }
+  let launcher = sample_launcher()
 
   match
     resolve_file_entry(launcher, Platform::Linux, fn() {
@@ -594,7 +643,7 @@ test "resolve_file_entry forwards home lookup failures" {
     Ok(entry) =>
       assert_eq(
         entry.file_path,
-        "/Users/moonbit/Library/LaunchAgents/moonbit-app.plist",
+        expected_entry_path(Platform::Macos, "/Users/moonbit", "moonbit-app"),
       )
     _ => fail("expected macOS file entry")
   }
@@ -610,13 +659,14 @@ test "resolve_file_entry forwards home lookup failures" {
     Ok(entry) =>
       assert_eq(
         entry.file_path,
-        "/home/moonbit/.config/autostart/moonbit-app.desktop",
+        expected_entry_path(Platform::Linux, "/home/moonbit", "moonbit-app"),
       )
     _ => fail("expected Linux file entry")
   }
 }
 
 ///|
+/// Verifies the Windows registry wrappers can create and remove a test entry.
 test "windows registry ffi wrappers work on windows" {
   guard current_platform() == Platform::Windows else { return }
 

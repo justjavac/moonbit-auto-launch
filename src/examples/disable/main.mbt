@@ -1,16 +1,7 @@
 ///|
+/// Disables the shared example auto-launch entry for the current user.
 fn main {
-  match
-    @auto_launch.new(
-      "MoonBit Auto Launch Example",
-      path=match @auto_launch.current_platform() {
-        Windows => "C:\\Program Files\\MoonBit\\moonbit.exe"
-        Macos => "/Applications/MoonBit.app/Contents/MacOS/MoonBit"
-        Linux => "/usr/bin/moonbit"
-        Unsupported => "/unsupported"
-      },
-      identifier="moonbit-auto-launch-example",
-    ) {
+  match @support.new_example_launcher() {
     Ok(launcher) =>
       match launcher.disable() {
         Ok(_) => println("Auto-launch disabled")

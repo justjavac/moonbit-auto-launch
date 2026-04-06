@@ -1,0 +1,5 @@
+import {
+  "justjavac/auto_launch",
+}
+
+supported_targets = "native"

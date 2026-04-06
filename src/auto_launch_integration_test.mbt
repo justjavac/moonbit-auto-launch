@@ -1,6 +1,7 @@
 ///|
-fn integration_tests_enabled() -> Bool {
-  match @env.get_env_var("MOONBIT_AUTO_LAUNCH_RUN_INTEGRATION_TESTS") {
+/// Returns whether `value` should enable integration-test execution.
+fn is_truthy_env_value(value : String?) -> Bool {
+  match value {
     Some("1") => true
     Some("true") => true
     Some("yes") => true
@@ -10,6 +11,15 @@ fn integration_tests_enabled() -> Bool {
 }
 
 ///|
+/// Reads the integration-test toggle from the process environment.
+fn integration_tests_enabled() -> Bool {
+  is_truthy_env_value(
+    @env.get_env_var("MOONBIT_AUTO_LAUNCH_RUN_INTEGRATION_TESTS"),
+  )
+}
+
+///|
+/// Returns a safe, platform-specific executable path for integration tests.
 fn stable_test_path(platform : Platform) -> String {
   match platform {
     Platform::Windows => "C:\\Windows\\System32\\notepad.exe"
@@ -20,19 +30,25 @@ fn stable_test_path(platform : Platform) -> String {
 }
 
 ///|
+/// Builds the launcher instance shared by the integration roundtrip test.
+fn new_integration_test_launcher() -> Result[AutoLaunch, AutoLaunchError] {
+  let platform = @auto_launch.current_platform()
+  @auto_launch.new(
+    "MoonBit Auto Launch Integration Test",
+    path=stable_test_path(platform),
+    identifier="moonbit-auto-launch-integration-test",
+  )
+}
+
+///|
+/// Verifies the real backend can enable, query, and disable one launcher entry.
 test "integration enable disable roundtrip" {
   guard integration_tests_enabled() else { return }
   guard @auto_launch.is_supported() else {
     fail("integration tests were enabled on an unsupported platform")
   }
 
-  let platform = @auto_launch.current_platform()
-  let launcher = match
-    @auto_launch.new(
-      "MoonBit Auto Launch Integration Test",
-      path=stable_test_path(platform),
-      identifier="moonbit-auto-launch-integration-test",
-    ) {
+  let launcher = match new_integration_test_launcher() {
     Ok(value) => value
     Err(error) => fail("failed to build launcher: \{error}")
   }

@@ -1,19 +1,11 @@
 ///|
+/// Prints the current platform and whether the shared example launcher is enabled.
 fn main {
   let platform = @auto_launch.current_platform()
   println("Platform: \{platform}")
   println("Supported: \{@auto_launch.is_supported()}")
 
-  let launcher = @auto_launch.new(
-    "MoonBit Auto Launch Example",
-    path=match platform {
-      Windows => "C:\\Program Files\\MoonBit\\moonbit.exe"
-      Macos => "/Applications/MoonBit.app/Contents/MacOS/MoonBit"
-      Linux => "/usr/bin/moonbit"
-      Unsupported => "/unsupported"
-    },
-    identifier="moonbit-auto-launch-example",
-  )
+  let launcher = @support.new_example_launcher()
 
   match launcher {
     Ok(value) =>
