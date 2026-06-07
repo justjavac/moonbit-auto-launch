@@ -14,7 +14,7 @@ struct AutoLaunchConfig {
 struct FileEntry {
   file_path : String
   contents : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Stores the normalized auto-launch configuration for one application.
@@ -30,7 +30,7 @@ pub struct AutoLaunch {
 ///|
 /// Trims leading and trailing whitespace from `text`.
 fn trim_text(text : String) -> String {
-  text.trim().to_string()
+  text.trim().to_owned()
 }
 
 ///|
@@ -80,7 +80,7 @@ fn sanitize_identifier(text : String) -> String {
       last_was_separator = true
     }
   }
-  builder.to_string().trim(chars="-._").to_string()
+  builder.to_string().trim(chars="-._").to_owned()
 }
 
 ///|
@@ -118,11 +118,10 @@ fn is_windows_unc_path(path : String) -> Bool {
 /// Performs platform-aware absolute-path detection.
 fn is_absolute_path(platform : Platform, path : String) -> Bool {
   match platform {
-    Platform::Windows =>
-      is_windows_drive_path(path) || is_windows_unc_path(path)
-    Platform::Macos => path.has_prefix("/")
-    Platform::Linux => path.has_prefix("/")
-    Platform::Unsupported => false
+    Windows => is_windows_drive_path(path) || is_windows_unc_path(path)
+    Macos => path.has_prefix("/")
+    Linux => path.has_prefix("/")
+    Unsupported => false
   }
 }
 

@@ -91,10 +91,7 @@ fn native_failure(
   fallback_message : String,
 ) -> AutoLaunchError {
   ignore(last_error_code_ffi())
-  AutoLaunchError::NativeFailure(
-    action~,
-    message=last_error_message_or(fallback_message),
-  )
+  NativeFailure(action~, message=last_error_message_or(fallback_message))
 }
 
 ///|
@@ -142,7 +139,7 @@ fn bool_result_from_status(
 fn current_executable_path_result() -> Result[String, AutoLaunchError] {
   optional_path_result(
     decode_optional_text(current_executable_path_ffi()),
-    AutoLaunchError::ExecutablePathUnavailable,
+    ExecutablePathUnavailable,
   )
 }
 
@@ -151,7 +148,7 @@ fn current_executable_path_result() -> Result[String, AutoLaunchError] {
 fn home_directory_result() -> Result[String, AutoLaunchError] {
   optional_path_result(
     decode_optional_text(home_directory_ffi()),
-    AutoLaunchError::HomeDirectoryUnavailable,
+    HomeDirectoryUnavailable,
   )
 }
 

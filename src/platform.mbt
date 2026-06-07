@@ -9,7 +9,17 @@ pub enum Platform {
   Macos
   Linux
   Unsupported
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for Platform with fn to_string(self) {
+  match self {
+    Windows => "Windows"
+    Macos => "Macos"
+    Linux => "Linux"
+    Unsupported => "Unsupported"
+  }
+}
 
 ///|
 /// Internal backend categories for supported startup mechanisms.
@@ -18,16 +28,16 @@ enum BackendKind {
   MacLaunchAgent
   LinuxDesktopEntry
   UnsupportedBackend
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Decodes the numeric platform code returned by the native layer.
 fn platform_from_code(code : Int) -> Platform {
   match code {
-    1 => Platform::Windows
-    2 => Platform::Macos
-    3 => Platform::Linux
-    _ => Platform::Unsupported
+    1 => Windows
+    2 => Macos
+    3 => Linux
+    _ => Unsupported
   }
 }
 
@@ -35,10 +45,10 @@ fn platform_from_code(code : Int) -> Platform {
 /// Returns the auto-launch backend used for `platform`.
 fn backend_for_platform(platform : Platform) -> BackendKind {
   match platform {
-    Platform::Windows => BackendKind::WindowsRegistry
-    Platform::Macos => BackendKind::MacLaunchAgent
-    Platform::Linux => BackendKind::LinuxDesktopEntry
-    Platform::Unsupported => BackendKind::UnsupportedBackend
+    Windows => WindowsRegistry
+    Macos => MacLaunchAgent
+    Linux => LinuxDesktopEntry
+    Unsupported => UnsupportedBackend
   }
 }
 
@@ -65,5 +75,5 @@ pub fn current_platform() -> Platform {
 /// `Unsupported` means the package was compiled or executed in an environment
 /// for which no native backend is implemented.
 pub fn is_supported() -> Bool {
-  backend_for_platform(current_platform()) != BackendKind::UnsupportedBackend
+  backend_for_platform(current_platform()) != UnsupportedBackend
 }

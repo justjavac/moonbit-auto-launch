@@ -95,17 +95,17 @@ fn file_entry_result(
   home_directory : String,
 ) -> Result[FileEntry, AutoLaunchError] {
   match platform {
-    Platform::Macos =>
-      Ok(FileEntry::{
+    Macos =>
+      Ok({
         file_path: launch_agent_path(home_directory, config.identifier),
         contents: mac_launch_agent_contents(config),
       })
-    Platform::Linux =>
-      Ok(FileEntry::{
+    Linux =>
+      Ok({
         file_path: linux_desktop_path(home_directory, config.identifier),
         contents: linux_desktop_contents(config),
       })
-    _ => Err(AutoLaunchError::UnsupportedPlatform(platform))
+    _ => Err(UnsupportedPlatform(platform))
   }
 }
 
@@ -175,16 +175,16 @@ fn enable_with(
   write_file : (String, String) -> Result[Unit, AutoLaunchError],
 ) -> Result[Unit, AutoLaunchError] {
   match platform {
-    Platform::Windows =>
+    Windows =>
       set_windows_entry(
         launcher.config.identifier,
         windows_command(launcher.config),
       )
-    Platform::Macos | Platform::Linux =>
+    Macos | Linux =>
       write_resolved_file_entry(
         launcher, platform, get_home_directory, write_file,
       )
-    Platform::Unsupported => Err(AutoLaunchError::UnsupportedPlatform(platform))
+    Unsupported => Err(UnsupportedPlatform(platform))
   }
 }
 
@@ -198,12 +198,12 @@ fn disable_with(
   remove_file : (String) -> Result[Unit, AutoLaunchError],
 ) -> Result[Unit, AutoLaunchError] {
   match platform {
-    Platform::Windows => delete_windows_entry(launcher.config.identifier)
-    Platform::Macos | Platform::Linux =>
+    Windows => delete_windows_entry(launcher.config.identifier)
+    Macos | Linux =>
       remove_resolved_file_entry(
         launcher, platform, get_home_directory, remove_file,
       )
-    Platform::Unsupported => Err(AutoLaunchError::UnsupportedPlatform(platform))
+    Unsupported => Err(UnsupportedPlatform(platform))
   }
 }
 
@@ -217,11 +217,11 @@ fn is_enabled_with(
   file_exists : (String) -> Result[Bool, AutoLaunchError],
 ) -> Result[Bool, AutoLaunchError] {
   match platform {
-    Platform::Windows => windows_entry_exists(launcher.config.identifier)
-    Platform::Macos | Platform::Linux =>
+    Windows => windows_entry_exists(launcher.config.identifier)
+    Macos | Linux =>
       resolved_file_entry_exists(
         launcher, platform, get_home_directory, file_exists,
       )
-    Platform::Unsupported => Err(AutoLaunchError::UnsupportedPlatform(platform))
+    Unsupported => Err(UnsupportedPlatform(platform))
   }
 }

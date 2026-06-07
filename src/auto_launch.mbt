@@ -3,8 +3,8 @@
 fn require_supported_platform(
   platform : Platform,
 ) -> Result[Unit, AutoLaunchError] {
-  if backend_for_platform(platform) == BackendKind::UnsupportedBackend {
-    Err(AutoLaunchError::UnsupportedPlatform(platform))
+  if backend_for_platform(platform) == UnsupportedBackend {
+    Err(UnsupportedPlatform(platform))
   } else {
     Ok(())
   }
@@ -32,10 +32,7 @@ fn resolve_executable_path(
 ) -> Result[String, AutoLaunchError] {
   match path {
     Some(explicit_path) =>
-      require_non_empty_text(
-        explicit_path,
-        AutoLaunchError::EmptyExecutablePath,
-      )
+      require_non_empty_text(explicit_path, EmptyExecutablePath)
     None => get_current_executable_path()
   }
 }
@@ -57,15 +54,14 @@ fn new_with(
     Err(error) => return Err(error)
   }
 
-  let trimmed_name = match
-    require_non_empty_text(name, AutoLaunchError::EmptyName) {
+  let trimmed_name = match require_non_empty_text(name, EmptyName) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
 
   let trimmed_background_arg = trim_text(background_arg)
   if launch_in_background && trimmed_background_arg.is_empty() {
-    return Err(AutoLaunchError::EmptyBackgroundArgument)
+    return Err(EmptyBackgroundArgument)
   }
 
   let resolved_path = match
@@ -75,10 +71,10 @@ fn new_with(
   }
 
   if !is_absolute_path(platform, resolved_path) {
-    return Err(AutoLaunchError::RelativeExecutablePath(resolved_path))
+    return Err(RelativeExecutablePath(resolved_path))
   }
 
-  Ok(AutoLaunch::{
+  Ok({
     config: {
       name: trimmed_name,
       app_path: resolved_path,

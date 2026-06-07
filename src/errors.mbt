@@ -9,8 +9,8 @@
 /// - `NativeFailure` reports a backend-specific failure message produced by the
 ///   underlying platform API
 ///
-/// This enum derives `Eq` and `Show`, which makes it convenient to inspect in
-/// tests and to print in user-facing diagnostics.
+/// This enum derives `Eq` and `Debug`, and implements `Show` for user-facing
+/// diagnostics.
 pub enum AutoLaunchError {
   EmptyName
   EmptyExecutablePath
@@ -20,4 +20,19 @@ pub enum AutoLaunchError {
   RelativeExecutablePath(String)
   UnsupportedPlatform(Platform)
   NativeFailure(action~ : String, message~ : String)
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for AutoLaunchError with fn to_string(self) {
+  match self {
+    EmptyName => "EmptyName"
+    EmptyExecutablePath => "EmptyExecutablePath"
+    EmptyBackgroundArgument => "EmptyBackgroundArgument"
+    ExecutablePathUnavailable => "ExecutablePathUnavailable"
+    HomeDirectoryUnavailable => "HomeDirectoryUnavailable"
+    RelativeExecutablePath(path) => "RelativeExecutablePath(\{path})"
+    UnsupportedPlatform(platform) => "UnsupportedPlatform(\{platform})"
+    NativeFailure(action~, message~) =>
+      "NativeFailure(action=\{action}, message=\{message})"
+  }
+}

@@ -22,10 +22,10 @@ fn integration_tests_enabled() -> Bool {
 /// Returns a safe, platform-specific executable path for integration tests.
 fn stable_test_path(platform : Platform) -> String {
   match platform {
-    Platform::Windows => "C:\\Windows\\System32\\notepad.exe"
-    Platform::Macos => "/usr/bin/true"
-    Platform::Linux => "/bin/true"
-    Platform::Unsupported => "/unsupported"
+    Windows => "C:\\Windows\\System32\\notepad.exe"
+    Macos => "/usr/bin/true"
+    Linux => "/bin/true"
+    Unsupported => "/unsupported"
   }
 }
 
