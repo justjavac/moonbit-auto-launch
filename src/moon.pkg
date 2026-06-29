@@ -3,6 +3,14 @@ import {
   "moonbitlang/core/encoding/utf8",
 }
 
+import {
+  "moonbitlang/core/test",
+} for "test"
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"
+
 supported_targets = "native"
 
 options(

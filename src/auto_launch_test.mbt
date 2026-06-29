@@ -62,7 +62,7 @@ test "new validates empty names" {
 /// Ensures the public constructor rejects relative explicit executable paths.
 test "new validates relative explicit paths" {
   match @auto_launch.new("Auto Launch", path="relative/path") {
-    Err(RelativeExecutablePath(path)) => assert_eq(path, "relative/path")
+    Err(RelativeExecutablePath(path)) => @test.assert_eq(path, "relative/path")
     _ => fail("expected RelativeExecutablePath")
   }
 }
@@ -80,8 +80,8 @@ test "new creates a launcher on supported platforms" {
     Err(error) => fail("expected launcher creation to succeed: \{error}")
   }
 
-  assert_eq(launcher.name(), "MoonBit Auto Launch")
-  assert_eq(launcher.identifier(), "moonbit-auto-launch")
+  @test.assert_eq(launcher.name(), "MoonBit Auto Launch")
+  @test.assert_eq(launcher.identifier(), "moonbit-auto-launch")
 }
 
 ///|
