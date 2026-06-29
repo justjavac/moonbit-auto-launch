@@ -181,6 +181,14 @@ pub fn AutoLaunch::identifier(self : AutoLaunch) -> String {
 ///   `~/.config/autostart`
 ///
 /// Returns `Ok(())` when the entry was written successfully.
+///
+/// # Example
+/// ```mbt nocheck
+/// let launcher = @auto_launch.new("MoonBit Demo").unwrap()
+/// let _ = launcher.enable()
+/// assert_eq(launcher.is_enabled(), Ok(true))
+/// let _ = launcher.disable()
+/// ```
 pub fn AutoLaunch::enable(self : AutoLaunch) -> Result[Unit, AutoLaunchError] {
   enable_with(
     self,
